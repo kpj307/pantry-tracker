@@ -26,7 +26,7 @@ export default function Home() {
 
   // add to database
   const addItem = async(e) => {
-    e.preventDefault();
+    // e.preventDefault();
     if (newItem.item !== '' && newItem.quantity !== ''){
       await addDoc(collection(db, 'items'), {
         item: newItem.item.trim(),
