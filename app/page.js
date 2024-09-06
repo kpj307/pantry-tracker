@@ -66,15 +66,17 @@ export default function Home() {
     });
   }
 
+  // array to hold filtered item
   const filteredItems = []
+  // filter items for the search item
   items.forEach(item =>{
-    if(item.item == searchItem){
+    if(item.item.toLowerCase() == searchItem.toLowerCase()){
       filteredItems.push(item)
     }
   })
   
-  const displayItems = clicked ? filteredItems : items;
-  
+  let displayItems = clicked ? filteredItems : items;
+
   return (
     <Box 
       width="100vw"
