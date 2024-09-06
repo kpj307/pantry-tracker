@@ -1,32 +1,28 @@
 'use client';
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography, Button } from "@mui/material";
 import TextField from '@mui/material/TextField';
 
-import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import Button from '@mui/material/Button';
-import { purple, red } from '@mui/material/colors';
-
-import { collection, addDoc, getDoc, QuerySnapshot, query, onSnapshot, deleteDoc, doc, increment, updateDoc } from "firebase/firestore"; 
-import { db, fieldValue } from "./firebase";
+import { collection, addDoc, getDoc, getDocs, QuerySnapshot, query, onSnapshot, deleteDoc, doc, increment, updateDoc, where } from "firebase/firestore"; 
+import { db } from "./firebase";
 import { useEffect, useState } from "react";
 
-const ColorButton = styled(Button)(({ theme }) => ({
-  color: theme.palette.getContrastText(red[500]),
-  backgroundColor: red[500],
-  borderColor: purple[900],
-  '&:hover': {
-    backgroundColor: red[700],
-  },
-}));
 
 export default function Home() {
   const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState({item: '', quantity: 1});
+  const [searchItem, setSearchItem] = useState('')
+  const [clicked, setClicked] = useState(false);
+  
+  const handleSubmit = (e) => {
+    setClicked(true);
+  }
+  const handleSearchClicked = (e) => {
+    setSearchItem(e.target.value);
+  }
 
   // add to database
   const addItem = async(e) => {
-    e.preventDefault();
+    // e.preventDefault();
     if (newItem.item !== '' && newItem.quantity !== ''){
       await addDoc(collection(db, 'items'), {
         item: newItem.item.trim(),
@@ -34,15 +30,15 @@ export default function Home() {
       });
       setNewItem({item: '', quantity: ''})
     }
+    window.location.reload();
   }
 
   // read from database
   useEffect(() => {
     const q = query(collection(db, 'items'));
 
-    const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
+    onSnapshot(q, (QuerySnapshot) => {
       let itemsArr = [];
-
       QuerySnapshot.forEach((doc) => {
         itemsArr.push({...doc.data(), id: doc.id})
       })
@@ -67,10 +63,18 @@ export default function Home() {
     const itemRef = doc(db, "items", id);
     await updateDoc(itemRef, {
      quantity: increment(-1)
-     
     });
   }
 
+  const filteredItems = []
+  items.forEach(item =>{
+    if(item.item == searchItem){
+      filteredItems.push(item)
+    }
+  })
+  
+  const displayItems = clicked ? filteredItems : items;
+  
   return (
     <Box 
       width="100vw"
@@ -99,14 +103,21 @@ export default function Home() {
           bgcolor={"#fff"}
           borderRadius={1}
         >
-         <TextField id="standard-basic" label="Search" variant="standard" />
+         <TextField 
+          id="standard-basic" 
+          label="Search" 
+          variant="standard" 
+          onChange={handleSearchClicked}
+          value={searchItem}
+         />
           <Button 
             variant="outlined"
             size={"small"}
+            type="submit"
+            onClick={handleSubmit}
           >Search</Button>
         </Box>
       </Box>
-
 
       <Box
         width={'800px'}
@@ -151,7 +162,7 @@ export default function Home() {
           >+</Button>
         </Box>
       </Box>
-
+      
       <Stack 
         paddingRight={3} 
         width="800px" 
@@ -159,7 +170,7 @@ export default function Home() {
         overflow={'auto'} 
         direction={{ xs: 'column' }}
       >
-        {items.map((item, id) => (
+        {displayItems.map((item, id) => (
           <Stack
             key={id}
             direction="row"
